@@ -3,8 +3,6 @@ Heroku Buildpack for create-react-app
 
 Deploy React.js web apps generated with [create-react-app](https://github.com/facebook/create-react-app). Automates deployment with the built-in bundler and serves it up via [Nginx](http://nginx.org/en/). See the [introductory blog post](https://blog.heroku.com/deploying-react-with-zero-configuration) and entry in [Heroku elements](https://elements.heroku.com/buildpacks/mars/create-react-app-buildpack).
 
-👉 *An [upcoming change](https://devcenter.heroku.com/changelog-items/1557) to the official Node.js buildpack affects this buildpack. **No changes are required to apps using this buildpack.** See [#156 Deploy with Auto Build](https://github.com/mars/create-react-app-buildpack/pull/156) for information about the transition on **March 11, 2019**, when new deployments may briefly be broken.*
-
 * 🚦 [Purpose](#user-content-purpose)
 * ⚠️ [Requirements](#user-content-requires)
 * 🚀 [Quick Start](#user-content-quick-start)
@@ -42,11 +40,12 @@ Purpose
 
 **This buildpack deploys a React UI as a static web site.** The [Nginx](http://nginx.org/en/) web server provides optimum performance and security for the runtime. See [Architecture](#user-content-architecture-) for details.
 
-If your goal is to combine React UI + API (Node, Ruby, Python…) into a *single app*, then this buildpack is not the answer. The simplest combined solution is all javascript:
+If your goal is to make a single app that combines React UI with a server-side backend (Node, Ruby, Python…), then this buildpack is not the answer.
 
-▶️ **[create-react-app + Node.js server](https://github.com/mars/heroku-cra-node)** on Heroku
+Check out these alternatives to use React with a server-side app:
 
-Combination with other languages is possible too, like [create-react-app + Rails 5 server](https://medium.com/superhighfives/a-top-shelf-web-stack-rails-5-api-activeadmin-create-react-app-de5481b7ec0b).
+* **[create-react-app + Node.js server](https://github.com/mars/heroku-cra-node)** ⭐️ simplest solution
+* **[create-react-app + Ruby on Rails server](https://blog.heroku.com/a-rock-solid-modern-web-stack)** 
 
 Requires
 --------
@@ -320,7 +319,7 @@ Replace `http://localhost:8000` with the URL to your local or remote backend ser
 
 ### Environment variables
 
-[`REACT_APP_*` environment variables](https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#adding-custom-environment-variables) are fully supported with this buildpack.
+[`REACT_APP_*` environment variables](https://facebook.github.io/create-react-app/docs/adding-custom-environment-variables) are fully supported with this buildpack.
 
 🚫🤐 ***Not for secrets.** These values may be accessed by anyone who can see the React app.*
 
@@ -358,7 +357,9 @@ ex: `REACT_APP_FILEPICKER_API_KEY` ([Add-on config vars](#user-content-add-on-co
 
 ### Compile-time configuration
 
-Supports [`REACT_APP_`](https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#adding-custom-environment-variables), `NODE_`, `NPM_`, & `HEROKU_` prefixed variables.
+Supports all config vars, including [`REACT_APP_`](https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#adding-custom-environment-variables), `NODE_`, `NPM_`, & `HEROKU_` prefixed variables.
+
+☝️🤐 ***Use secrets carefully.** If these values are embedded in the JavaScript bundle, like with `REACT_APP_` vars, then they may be accessed by anyone who can see the React app.*
 
 Use Node's [`process.env` object](https://nodejs.org/dist/latest-v10.x/docs/api/process.html#process_process_env).
 
@@ -528,15 +529,12 @@ This buildpack combines several buildpacks, specified in [`.buildpacks`](.buildp
    * installs `node`, puts on the `$PATH`
    * version specified in [`package.json`, `engines.node`](https://devcenter.heroku.com/articles/nodejs-support#specifying-a-node-js-version)
    * `node_modules/` cached between deployments
-   * `NODE_ENV` at buildtime:
-     * defaults to `NODE_ENV=development` to install the build tooling of create-react-app's dev dependencies, like `react-scripts`
-     * honors specific setting of `NODE_ENV`, like `NODE_ENV=test` for [automated testing](#user-content-testing) in [`bin/test`](bin/test-compile)
-     * but forces `NODE_ENV=production` to be `development` to ensure dev dependencies are available for build
-2. [`mars/create-react-app-inner-buildpack`](https://github.com/mars/create-react-app-inner-buildpack)
    * production build for create-react-app
-     * executes the npm package's build script; create-react-app default is `react-scripts build`
-     * exposes `REACT_APP_`, `NODE_`, `NPM_`, & `HEROKU_` prefixed env vars to the build script
+     * [executes the npm package's build script](https://devcenter.heroku.com/changelog-items/1557); create-react-app default is `react-scripts build`
+     * exposes all env vars to the build script
      * generates a production bundle regardless of `NODE_ENV` setting
+     * customize further with [Node.js build configuration](https://devcenter.heroku.com/articles/nodejs-support#customizing-the-build-process)
+2. [`mars/create-react-app-inner-buildpack`](https://github.com/mars/create-react-app-inner-buildpack)
    * sets default [web server config](#user-content-web-server) unless `static.json` already exists
    * enables [runtime environment variables](#user-content-environment-variables)
 3. [`heroku/static` buildpack](https://github.com/heroku/heroku-buildpack-static)
